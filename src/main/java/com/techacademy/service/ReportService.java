@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import com.techacademy.constants.ErrorKinds;
 import com.techacademy.entity.Employee;
-import com.techacademy.entity.Employee.Role;
 import com.techacademy.entity.Report;
 import com.techacademy.repository.ReportRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,24 +24,17 @@ public class ReportService {
     }
 
     // レポート一覧表示処理
-    public List<Report> findReports(Report report) {
-        String code = report.getEmployee().getCode();
-        Role role = report.getEmployee().getRole();
+    // employeeを渡すように修正
+    public List<Report> findReports(Employee employee) {
+        String code = employee.getCode();
+        Employee.Role role = employee.getRole();
 
         if(role == Employee.Role.ADMIN) {
             return reportRepository.findAll();
         }else {
-            return reportRepository.findByEmployee_Code(code);
+            return reportRepository.findByDeleteFlgFalseAndEmployee_Code(code);
         }
     }
-
-//     public List<Report> findReports(String employeeName, Employee.Role role) {
-//        if(role == Employee.Role.ADMIN) {
-//            return reportRepository.findAll();
-//        }else {
-//            return reportRepository.findByEmployee_Name(employeeName);
-//        }
-//    }
 
     // 1件を検索
     public Report findById(Integer id) {

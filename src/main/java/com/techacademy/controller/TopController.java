@@ -17,7 +17,7 @@ public class TopController {
     @GetMapping(value = "/")
     public String top() {
 //        return "redirect:/employees";
-        return "redirect:/dailyreports";
+        return "redirect:/reports";
     }
 
 }

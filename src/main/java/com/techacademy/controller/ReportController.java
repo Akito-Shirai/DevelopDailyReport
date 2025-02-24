@@ -12,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 //import org.springframework.web.bind.annotation.ModelAttribute;
 //import org.springframework.web.bind.annotation.PathVariable;
 //import org.springframework.web.bind.annotation.PostMapping;
@@ -30,7 +31,7 @@ import com.techacademy.service.ReportService;
 import com.techacademy.service.UserDetail;
 
 @Controller
-@RequestMapping("dailyreports")
+@RequestMapping("reports")
 public class ReportController {
 
     private final ReportService reportService;
@@ -43,19 +44,18 @@ public class ReportController {
     @GetMapping
     public String showList(Model model, @AuthenticationPrincipal UserDetail userDetail) {
         // 現在ログイン中のユーザー情報から Employee を取得し、Report の検索条件に設定する
-        Report report = new Report();
-        report.setEmployee(userDetail.getEmployee());
-
-        List<Report> reportList = reportService.findReports(report);
+        List<Report> reportList = reportService.findReports(userDetail.getEmployee());
         model.addAttribute("listSize", reportList.size());
         model.addAttribute("reportList", reportList);
 
-        return "dailyreports/list";
+        return "reports/list";
     }
 
+    @GetMapping(value = {"/{ID}", "/{ID}/"})
     // 日報詳細画面(detail)
-    public String showDetail() {
-        return "";
+    public String showDetail(@PathVariable("ID") Integer id, Model model) {
+        model.addAttribute("report", reportService.findById(id));
+        return "reports/detail";
     }
 
     // 日報新規登録画面(create)

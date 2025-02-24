@@ -12,5 +12,7 @@ public interface ReportRepository extends JpaRepository<Report, Integer> {
 //    List<Report> findByEmployee(Employee employee);
 //    List<Report> findByEmployee_Name(String name);
     List<Report> findByEmployee_Code(String code);
+    // 削除フラグの対応を実装する
+    List<Report> findByDeleteFlgFalseAndEmployee_Code(String code);
 
 }
