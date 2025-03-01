@@ -9,6 +9,7 @@ import com.techacademy.entity.Employee;
 import com.techacademy.entity.Report;
 
 public interface ReportRepository extends JpaRepository<Report, Integer> {
+    List<Report> findByEmployee(Employee employee);
     // ユーザ名で検索
     List<Report> findByEmployee_Code(String code);
     // 削除フラグの対応を実装する

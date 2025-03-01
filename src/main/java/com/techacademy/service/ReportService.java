@@ -46,6 +46,11 @@ public class ReportService {
         return report;
     }
 
+    // 従業員に紐づくReportを取得する
+    public List<Report> findByEmployee(Employee employee){
+        return reportRepository.findByEmployee(employee);
+    }
+
     // レポート保存
     @Transactional
     public ErrorKinds save(Report report) {
@@ -74,15 +79,15 @@ public class ReportService {
         return ErrorKinds.SUCCESS;
     }
 
-    // 日報削除
+    // 日報削除(論理削除)
     @Transactional
     public ErrorKinds delete(Integer id) {
-
         Report report = findById(id);
-        LocalDateTime now = LocalDateTime.now();
-        report.setUpdatedAt(now);
-        report.setDeleteFlg(true);
-
+        if(report != null) {
+            LocalDateTime now = LocalDateTime.now();
+            report.setUpdatedAt(now);
+            report.setDeleteFlg(true);
+        }
         return ErrorKinds.SUCCESS;
     }
 
