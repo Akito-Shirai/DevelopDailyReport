@@ -27,7 +27,6 @@ import lombok.Data;
 public class Report {
     // ID
     @Id
-    @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 

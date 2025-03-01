@@ -1,5 +1,6 @@
 package com.techacademy.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +49,10 @@ public class ReportService {
     // レポート保存
     @Transactional
     public ErrorKinds save(Report report) {
+        LocalDateTime now = LocalDateTime.now();
+        report.setDeleteFlg(false);
+        report.setCreatedAt(now);
+        report.setUpdatedAt(now);
         reportRepository.save(report);
         return ErrorKinds.SUCCESS;
     }
@@ -73,13 +78,16 @@ public class ReportService {
     @Transactional
     public ErrorKinds delete(Integer id) {
 
-
         Report report = findById(id);
         LocalDateTime now = LocalDateTime.now();
         report.setUpdatedAt(now);
         report.setDeleteFlg(true);
 
         return ErrorKinds.SUCCESS;
+    }
+
+    public boolean hasReportDate(Employee employee, LocalDate reportDate) {
+        return reportRepository.existsByEmployeeAndReportDate(employee, reportDate);
     }
 
 }

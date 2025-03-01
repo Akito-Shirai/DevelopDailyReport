@@ -8,16 +8,20 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 //import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 //import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 //import org.springframework.web.bind.annotation.ModelAttribute;
 //import org.springframework.web.bind.annotation.PathVariable;
 //import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.techacademy.constants.ErrorKinds;
+import com.techacademy.constants.ErrorMessage;
 import com.techacademy.entity.Employee;
 import com.techacademy.entity.Report;
 
@@ -59,8 +63,11 @@ public class ReportController {
     }
 
     // 日報新規登録画面(create)
-    public String showRegister() {
-        return "";
+    @GetMapping(value = "/add")
+    public String showRegister(Model model, @ModelAttribute Report report, @AuthenticationPrincipal UserDetail userDetail) {
+        String name = userDetail.getEmployee().getName();
+        model.addAttribute("name", name);
+        return "reports/new";
     }
     // 日報更新画面(edit)
     public String showEdit() {
@@ -68,15 +75,56 @@ public class ReportController {
     }
 
     // 日報新規追加処理(add)
-    public String procAdd() {
-        return "";
+    @PostMapping(value = "/add")
+    public String procAdd(@Validated Report report, BindingResult res, Model model, @AuthenticationPrincipal UserDetail userDetail) {
+        // employeeフィールドに認証ユーザーのEmployeeをセット
+        Employee currentEmployee = userDetail.getEmployee();
+        report.setEmployee(currentEmployee);
+
+        // バリデーションエラーチェック
+        String name = currentEmployee.getName();
+        if(res.hasErrors()) {
+            model.addAttribute("name", name);
+            return "reports/new";
+        }
+
+        // 更新処理でもsaveを使用するため、日付チェックをコントローラ上に実装
+        boolean isRegisteredDate = reportService.hasReportDate(currentEmployee, report.getReportDate());
+        if(isRegisteredDate) {
+            res.rejectValue(
+                "reportDate",
+                ErrorMessage.getErrorName(ErrorKinds.DATECHECK_ERROR),
+                ErrorMessage.getErrorValue(ErrorKinds.DATECHECK_ERROR)
+            );
+            model.addAttribute("name", name);
+            return "reports/new";
+        }
+
+        // 保存処理
+        ErrorKinds result = reportService.save(report);
+        // result確認
+        if (ErrorMessage.contains(result)) {
+//            String name = userDetail.getEmployee().getName();
+            model.addAttribute("name", name);
+            model.addAttribute(ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
+            return "reports/new";
+        }
+        return "redirect:/reports";
     }
+
     // 日報更新処理(update)
     public String procUpdate() {
         return "";
     }
     // 日報削除処理(delete)
-     public String procDelete() {
-        return "";
+    @PostMapping(value = "/{ID}/delete")
+     public String procDelete(@PathVariable("ID") Integer id, @AuthenticationPrincipal UserDetail userDetail, Model model) {
+        ErrorKinds result = reportService.delete(id);
+        if(ErrorMessage.contains(result)) {
+            model.addAttribute(ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
+            model.addAttribute("report", reportService.findById(id));
+            return showDetail(id, model);
+        }
+        return "redirect:/reports";
     }
 }
