@@ -70,8 +70,10 @@ public class ReportController {
         return "reports/new";
     }
     // 日報更新画面(edit)
-    public String showEdit() {
-        return "";
+    @GetMapping(value = "/{ID}/update")
+    public String showEdit(@PathVariable("ID") Integer id, Model model) {
+        model.addAttribute("report", reportService.findById(id));
+        return "reports/update";
     }
 
     // 日報新規追加処理(add)
@@ -113,8 +115,20 @@ public class ReportController {
     }
 
     // 日報更新処理(update)
-    public String procUpdate() {
-        return "";
+    @PostMapping(value = "/{ID}/update")
+    public String procUpdate(@Validated @ModelAttribute("report") Report report, BindingResult res, @PathVariable("ID") Integer id, Model model) {
+        // バリデーションエラーチェック
+        if (res.hasErrors()) {
+            return "reports/update";
+        }
+
+        // 更新処理実行
+        ErrorKinds result = reportService.update(report);
+        if(ErrorMessage.contains(result)) {
+            model.addAttribute(ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
+            return "reports/update";
+        }
+        return "redirect:/reports";
     }
     // 日報削除処理(delete)
     @PostMapping(value = "/{ID}/delete")
