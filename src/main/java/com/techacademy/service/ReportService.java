@@ -74,6 +74,7 @@ public class ReportService {
         existingReport.setReportDate(report.getReportDate());
         existingReport.setTitle(report.getTitle());
         existingReport.setContent(report.getContent());
+        existingReport.setUpdatedAt(now);
 
         reportRepository.save(existingReport);
         return ErrorKinds.SUCCESS;

@@ -90,16 +90,10 @@ public class ReportController {
             return "reports/new";
         }
 
-        // 更新処理でもsaveを使用するため、日付チェックをコントローラ上に実装
-        boolean isRegisteredDate = reportService.hasReportDate(currentEmployee, report.getReportDate());
-        if(isRegisteredDate) {
-            res.rejectValue(
-                "reportDate",
-                ErrorMessage.getErrorName(ErrorKinds.DATECHECK_ERROR),
-                ErrorMessage.getErrorValue(ErrorKinds.DATECHECK_ERROR)
-            );
-            model.addAttribute("name", name);
-            return "reports/new";
+        // 日付チェック
+        String errorView = checkReportDate(currentEmployee, report, res, model, "reports/new");
+        if(errorView != null) {
+            return errorView;
         }
 
         // 保存処理
@@ -116,15 +110,27 @@ public class ReportController {
 
     // 日報更新処理(update)
     @PostMapping(value = "/{ID}/update")
-    public String procUpdate(@Validated @ModelAttribute("report") Report report, BindingResult res, @PathVariable("ID") Integer id, Model model) {
+    public String procUpdate(@Validated @ModelAttribute("report") Report report, BindingResult res, @PathVariable("ID") Integer id, Model model, @AuthenticationPrincipal UserDetail userDetail) {
+        Employee currentEmployee = userDetail.getEmployee();
+        report.setEmployee(currentEmployee);
+        String name = currentEmployee.getName();
+
         // バリデーションエラーチェック
         if (res.hasErrors()) {
+            model.addAttribute("name", name);
             return "reports/update";
+        }
+
+        // 日付チェック
+        String errorView = checkReportDate(currentEmployee, report, res, model, "reports/update");
+        if(errorView != null) {
+            return errorView;
         }
 
         // 更新処理実行
         ErrorKinds result = reportService.update(report);
         if(ErrorMessage.contains(result)) {
+            model.addAttribute("name", name);
             model.addAttribute(ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
             return "reports/update";
         }
@@ -141,4 +147,20 @@ public class ReportController {
         }
         return "redirect:/reports";
     }
+
+    // 更新処理でもsaveを使用するため、日付チェックをコントローラ上に実装
+    private String checkReportDate(Employee currentEmployee, Report report, BindingResult res, Model model, String returnView) {
+        boolean isRegisteredDate = reportService.hasReportDate(currentEmployee, report.getReportDate());
+        if(isRegisteredDate) {
+            res.rejectValue(
+                    "reportDate",
+                    ErrorMessage.getErrorName(ErrorKinds.DATECHECK_ERROR),
+                    ErrorMessage.getErrorValue(ErrorKinds.DATECHECK_ERROR)
+            );
+            model.addAttribute("name", currentEmployee.getName());
+            return returnView;
+        }
+        return null;
+    }
+
 }
