@@ -4,8 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Service;
 
@@ -54,6 +52,9 @@ public class ReportService {
     // レポート保存
     @Transactional
     public ErrorKinds save(Report report) {
+        if (hasReportDate(report.getEmployee(), report.getReportDate())) {
+            return ErrorKinds.DATECHECK_ERROR;
+        }
         LocalDateTime now = LocalDateTime.now();
         report.setDeleteFlg(false);
         report.setCreatedAt(now);
@@ -68,6 +69,13 @@ public class ReportService {
         Report existingReport = findById(report.getId());
         if(existingReport == null) {
             return ErrorKinds.NOT_FOUND;
+        }
+
+        // 日付チェック
+        if (!existingReport.getReportDate().equals(report.getReportDate())) {
+            if (hasReportDate(report.getEmployee(), report.getReportDate())) {
+                return ErrorKinds.DATECHECK_ERROR;
+            }
         }
 
         LocalDateTime now = LocalDateTime.now();

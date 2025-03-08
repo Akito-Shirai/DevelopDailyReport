@@ -4,20 +4,14 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-//import org.springframework.dao.DataIntegrityViolationException;
-//import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-//import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-//import org.springframework.web.bind.annotation.ModelAttribute;
-//import org.springframework.web.bind.annotation.PathVariable;
-//import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.techacademy.constants.ErrorKinds;
@@ -25,13 +19,7 @@ import com.techacademy.constants.ErrorMessage;
 import com.techacademy.entity.Employee;
 import com.techacademy.entity.Report;
 
-//import com.techacademy.constants.ErrorKinds;
-//import com.techacademy.constants.ErrorMessage;
-
-//import com.techacademy.entity.Employee;
-//import com.techacademy.service.EmployeeService;
 import com.techacademy.service.ReportService;
-//import com.techacademy.service.UserDetail;
 import com.techacademy.service.UserDetail;
 
 @Controller
@@ -82,25 +70,23 @@ public class ReportController {
         // employeeフィールドに認証ユーザーのEmployeeをセット
         Employee currentEmployee = userDetail.getEmployee();
         report.setEmployee(currentEmployee);
+        String name = currentEmployee.getName();
 
         // バリデーションエラーチェック
-        String name = currentEmployee.getName();
         if(res.hasErrors()) {
             model.addAttribute("name", name);
             return "reports/new";
         }
 
-        // 日付チェック
-        String errorView = checkReportDate(currentEmployee, report, res, model, "reports/new");
-        if(errorView != null) {
-            return errorView;
-        }
-
         // 保存処理
         ErrorKinds result = reportService.save(report);
         // result確認
+        if (result == ErrorKinds.DATECHECK_ERROR) {
+            res.rejectValue("reportDate", ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
+            model.addAttribute("name", name);
+            return "reports/new";
+        }
         if (ErrorMessage.contains(result)) {
-//            String name = userDetail.getEmployee().getName();
             model.addAttribute("name", name);
             model.addAttribute(ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
             return "reports/new";
@@ -121,14 +107,13 @@ public class ReportController {
             return "reports/update";
         }
 
-        // 日付チェック
-        String errorView = checkReportDate(currentEmployee, report, res, model, "reports/update");
-        if(errorView != null) {
-            return errorView;
-        }
-
         // 更新処理実行
         ErrorKinds result = reportService.update(report);
+        if(result == ErrorKinds.DATECHECK_ERROR) {
+            res.rejectValue("reportDate", ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
+            model.addAttribute("name", name);
+            return "reports/update";
+        }
         if(ErrorMessage.contains(result)) {
             model.addAttribute("name", name);
             model.addAttribute(ErrorMessage.getErrorName(result), ErrorMessage.getErrorValue(result));
@@ -136,6 +121,7 @@ public class ReportController {
         }
         return "redirect:/reports";
     }
+
     // 日報削除処理(delete)
     @PostMapping(value = "/{ID}/delete")
      public String procDelete(@PathVariable("ID") Integer id, @AuthenticationPrincipal UserDetail userDetail, Model model) {
@@ -146,21 +132,6 @@ public class ReportController {
             return showDetail(id, model);
         }
         return "redirect:/reports";
-    }
-
-    // 更新処理でもsaveを使用するため、日付チェックをコントローラ上に実装
-    private String checkReportDate(Employee currentEmployee, Report report, BindingResult res, Model model, String returnView) {
-        boolean isRegisteredDate = reportService.hasReportDate(currentEmployee, report.getReportDate());
-        if(isRegisteredDate) {
-            res.rejectValue(
-                    "reportDate",
-                    ErrorMessage.getErrorName(ErrorKinds.DATECHECK_ERROR),
-                    ErrorMessage.getErrorValue(ErrorKinds.DATECHECK_ERROR)
-            );
-            model.addAttribute("name", currentEmployee.getName());
-            return returnView;
-        }
-        return null;
     }
 
 }
